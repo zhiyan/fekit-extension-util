@@ -1,7 +1,7 @@
 {
   "fekit_extension_command_name": "util",
   "name": "fekit-extension-util",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "fekit extension util",
   "main": "index.js",
   "scripts": {
