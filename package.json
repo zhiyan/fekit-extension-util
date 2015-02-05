@@ -1,12 +1,12 @@
 {
-  "fekit_extension_command_name":"util",
+  "fekit_extension_command_name": "util",
   "name": "fekit-extension-util",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "fekit extension util",
   "main": "index.js",
-  "scripts":{
-        "postinstall":"node ./scripts/postinstall.js",
-        "preuninstall":"node ./scripts/preuninstall.js"
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.js",
+    "preuninstall": "node ./scripts/preuninstall.js"
   },
   "keywords": [
     "fekit",
