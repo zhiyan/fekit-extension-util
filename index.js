@@ -20,13 +20,19 @@ exports.usage = 'fekit工具函数库';
 
 exports.set_options = function( optimist ){
 
-    return optimist.describe('l', '列出所有fekit工具函数').alias('l','list')
+    return optimist.describe('init', '初始化fekit util')
+    			   .describe('l', '列出所有fekit工具函数').alias('l','list')
     			   .describe('i', '安装fekit工具函数').alias('i','install')
-    			   .describe('t', '测试').alias('t','test')
+    			   .describe('u', '卸载fekit工具函数').alias('u','uninstall')
+    			   
 
 }
 
 exports.run = function( options ){
+
+    if( options.init ){
+    	return init( options )
+    }
 
     if( options.list ){
     	return list()
@@ -36,10 +42,30 @@ exports.run = function( options ){
     	return install( options )
     }
 
-    if( options.test ){
-    	return test( options )
+    if( options.uninstall ){
+    	return uninstall( options )
     }
 
+    // 默认调出帮助
+    exec('fekit util -h',function( error, stdout, stderr ){
+    	console.log( stdout )
+		console.log( stderr )
+	})
+
+}
+
+// command : 初始化fekit util
+function init(){
+	// 创建配置文件
+	if( !fs.existsSync( configFile ) ){
+		fs.createWriteStream( configFile )
+		writeConfigFile( defaultOptions )
+		log( '创建配置文件成功' )
+		log( '开始安装fekitUtil组件...' )
+		createFekitUtil()
+	}else{
+		log( '已检测到配置文件.' )
+	}
 }
 
 // command : 列出所有fekit工具函数
@@ -60,31 +86,11 @@ function list(){
 function install( options ){
 
 	var config,
-		fekitCompileType,
 		source,
 		utilNames,
 		name = options.install
 
-	// 创建配置文件
-	if( !fs.existsSync( configFile ) ){
-		fs.createWriteStream( configFile )
-		writeConfigFile( defaultOptions )
-		log( '创建配置文件成功' )
-
-		log( '开始安装fekitUtil组件...' )
-		createFekitUtil()
-		log( '安装fekitUtil组件成功')
-	}
-
-	// 未成功拉取fekitUtil的处理
-	if( !fs.existsSync( fekitUtilPath ) ){
-		log( '安装fekitUtil未成功，请检查网络环境')
-		log( '\n或执行fekit install fekitUtil后再试')
-		return
-	}
-
-	// 无参数直接返回
-	if( typeof options.install === 'boolean') return;
+	if( !isInited( options ) ) return
 
 	// 读取configFile
 	config = readConfigFile()
@@ -94,6 +100,7 @@ function install( options ){
 
 	if( !~utilNames.indexOf( options.install ) ){
 		utils.logger.error( '未找到' + name + '函数组件' )
+		return
 	}
 	if( ~config.installed_utils.indexOf( options.install ) ){
 		log( name + '函数已安装' )
@@ -104,28 +111,11 @@ function install( options ){
 	log( '开始安装' + name + '函数...' )
 
 	source = {}
-
-	config.installed_utils.forEach( function(utilName){
-		source[utilName] = '#' + utilName
-	} )
-
 	source[ name ] = '#' + name
 
-	// console.log(source)
+	source = handleData( source, config )
 
-	source = JSON.stringify( source, null, 4 )
-
-	fekitCompileType = getFekitCompileType()
-
-	if( fekitCompileType === 'modular' ){
-		source = "module.exports = " + source
-	}else{
-		source = "window.fekitUtil = " + source
-	}
-
-	source = install_function( source )
-
-	writeFekitUtil( install_function( source ) )
+	writeFekitUtil( source )
 
 	// 写入config配置
 	config.installed_utils.push( name )
@@ -134,10 +124,35 @@ function install( options ){
 
 }
 
-function test( options ){
-	console.log("test start")
-}
+// command : 卸载工具函数
+function uninstall( options ){
 
+	var config,
+		source,
+		name = options.uninstall
+
+	if( !isInited( options ) ) return
+
+	// 读取configFile
+	config = readConfigFile()
+
+	if( !~config.installed_utils.indexOf( options.uninstall ) ){
+		log( name + '函数尚未安装' )
+		return
+	}
+
+	// 写入config配置
+	config.installed_utils.splice( config.installed_utils.indexOf(name), 1 )
+	writeConfigFile( config )
+
+	// 开始安装
+	log( '开始卸载' + name + '函数...' )
+
+	source = handleData( {}, config )
+
+	writeFekitUtil( source )	
+	log( name + '函数组件卸载完成!' )
+}
 
 /*=============== 内部调用方法=================*/
 
@@ -181,16 +196,57 @@ function install_function( data ){
 	return data
 }
 
+// 检测是否初始化
+function isInited( options ){
+	// 创建配置文件
+	if( !fs.existsSync( configFile ) ){
+		utils.logger.error( '未初始化fekit util, 请使用fekit util --init初始化配置文件' )
+		return false
+	}
+
+	// 未成功拉取fekitUtil的处理
+	if( !fs.existsSync( fekitUtilPath ) ){
+		log( '安装fekitUtil未成功，请检查网络环境')
+		log( '\n或执行fekit install fekitUtil后再试')
+		return false
+	}
+
+	// 无参数直接返回
+	if( typeof options.install === 'boolean') return false;
+
+	return true
+}
+
 // 安装fekitUtil组件
 function createFekitUtil(){
 	exec('fekit install fekitUtil',function( error, stdout, stderr ){
 		console.log(stdout);
+		log( '安装fekitUtil组件完成' )
 	})
-	sleep(5000);
+}
+
+// 处理文件内容
+function handleData( source, config ){
+
+	config.installed_utils.forEach( function(utilName){
+		source[utilName] = '#' + utilName
+	} )
+
+	source = JSON.stringify( source, null, 4 )
+
+	if( getFekitCompileType() === 'modular' ){
+		source = "module.exports = " + source
+	}else{
+		source = "window.fekitUtil = " + source
+	}
+
+	source = install_function( source )
+
+	return source
 }
 
 // 模拟阻塞
 function sleep(milliSeconds) { 
     var startTime = new Date().getTime(); 
     while (new Date().getTime() < startTime + milliSeconds);
-};
+}
