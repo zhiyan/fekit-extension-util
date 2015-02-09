@@ -20,9 +20,14 @@
 
     fekit util -u [funcName]
 
-## 展示函数内容
 
-    fekit util -g [funcName]
+## 查看函数帮助内容
+
+    fekit util -m [funcName]
+
+## 展示函数
+
+    fekit util -v [funcName]
 
 ## 在项目中使用
 

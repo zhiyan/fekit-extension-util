@@ -23,7 +23,8 @@ exports.set_options = function( optimist ){
 
     return optimist.describe('init', '初始化fekit util')
     			   .describe('l', '列出所有fekit工具函数').alias('l','list')
-    			   .describe('g', '显示fekit工具函数').alias('g','get')
+    			   .describe('v', '显示fekit工具函数').alias('v','view')
+    			   .describe('m','查看fekit工具函数帮助信息').alias('m','man')
     			   .describe('i', '安装fekit工具函数').alias('i','install')
     			   .describe('u', '卸载fekit工具函数').alias('u','uninstall')
     			   
@@ -44,12 +45,16 @@ exports.run = function( options ){
     	return install( options )
     }
 
-    if( options.get ){
-    	return get( options )
+    if( options.view ){
+    	return view( options )
     }
 
     if( options.uninstall ){
     	return uninstall( options )
+    }
+
+    if( options.man ){
+    	return man( options )
     }
 
     // 默认调出帮助
@@ -83,14 +88,14 @@ function list(){
 		if( fs.statSync( p ).isDirectory() ){
 			// TODO: readme大小写忽略 
 			var data = fs.readFileSync( path.join( p, 'readme.md' ), 'utf-8' )
-			console.log( '  ' + pad(pathname,40) + '#' + data.replace(/^\s*|\s*$/g,"") )
+			console.log( '  ' + pad(pathname,40) + '#' + data.match(/(.*\r)/)[1].replace(/^\s*|\s*$/g,"") )
 		}
 	})
 }
 
 // command: 显示fekit工具函数
-function get( options ){
-	var name = options.get,
+function view( options ){
+	var name = options.view,
 		utilNames = getAvailableUtils(),
 		file
 
@@ -105,6 +110,27 @@ function get( options ){
 	}
 
 	file = fs.readFileSync( path.join(utilPath, name, 'index.js'), 'utf-8')
+	console.log(file)
+}
+
+// command: 查看fekit工具函数帮助信息
+function man( options ){
+	var name = options.man,
+		utilNames = getAvailableUtils(),
+		file
+
+	if( name === true ){
+		utils.logger.error( '请输入函数名称, 使用fekit util --list 查看所有函数' )
+		return
+	}
+
+	if( !~utilNames.indexOf( name ) ){
+		utils.logger.error( '未找到' + name + '函数组件' )
+		return
+	}
+
+	file = fs.readFileSync( path.join(utilPath, name, 'readme.md'), 'utf-8')
+	file = file.replace(/\r/,"\n=========================================").replace(/^|$/g,"\n")
 	console.log(file)
 }
 
