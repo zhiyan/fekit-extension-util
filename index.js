@@ -1,5 +1,6 @@
 var fs = require('fs'),
 	path = require('path'),
+	pad = require('pad'),
 	exec = require('child_process').exec,
 	basePath = '.',
 	baselib = path.join( module.parent.filename , '../' ),
@@ -22,6 +23,7 @@ exports.set_options = function( optimist ){
 
     return optimist.describe('init', '初始化fekit util')
     			   .describe('l', '列出所有fekit工具函数').alias('l','list')
+    			   .describe('g', '显示fekit工具函数').alias('g','get')
     			   .describe('i', '安装fekit工具函数').alias('i','install')
     			   .describe('u', '卸载fekit工具函数').alias('u','uninstall')
     			   
@@ -40,6 +42,10 @@ exports.run = function( options ){
 
     if( options.install ){
     	return install( options )
+    }
+
+    if( options.get ){
+    	return get( options )
     }
 
     if( options.uninstall ){
@@ -77,9 +83,29 @@ function list(){
 		if( fs.statSync( p ).isDirectory() ){
 			// TODO: readme大小写忽略 
 			var data = fs.readFileSync( path.join( p, 'readme.md' ), 'utf-8' )
-			console.log( '  ' + pathname + '\t\t#' + data )
+			console.log( '  ' + pad(pathname,40) + '#' + data.replace(/^\s*|\s*$/g,"") )
 		}
 	})
+}
+
+// command: 显示fekit工具函数
+function get( options ){
+	var name = options.get,
+		utilNames = getAvailableUtils(),
+		file
+
+	if( name === true ){
+		utils.logger.error( '请输入函数名称, 使用fekit util --list 查看所有函数' )
+		return
+	}
+
+	if( !~utilNames.indexOf( name ) ){
+		utils.logger.error( '未找到' + name + '函数组件' )
+		return
+	}
+
+	file = fs.readFileSync( path.join(utilPath, name, 'index.js'), 'utf-8')
+	console.log(file)
 }
 
 // command : 安装工具函数
@@ -98,11 +124,11 @@ function install( options ){
 	// 读取util目录
 	utilNames = getAvailableUtils()
 
-	if( !~utilNames.indexOf( options.install ) ){
+	if( !~utilNames.indexOf( name ) ){
 		utils.logger.error( '未找到' + name + '函数组件' )
 		return
 	}
-	if( ~config.installed_utils.indexOf( options.install ) ){
+	if( ~config.installed_utils.indexOf( name ) ){
 		log( name + '函数已安装' )
 		return
 	}

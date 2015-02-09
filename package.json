@@ -15,5 +15,7 @@
   ],
   "author": "zhiyan",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "pad": "0.0.8"
+  }
 }
