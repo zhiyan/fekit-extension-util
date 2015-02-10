@@ -1,17 +1,5 @@
-function cookie( name, value ,options ){
-    var exp;
-    if( !value ){
-        // 取
-        var arr = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)(;|$)'));
-        if (arr != null && value !== null) return unescape(arr[2]);
-        if( value === null ){
-            exp = new Date();
-            exp.setTime(exp.getTime() - 1); 
-            document.cookie = name + '=' + arr[2] +';expires=' +  exp.toGMTString(); 
-        }
-        return null
-    }else{
-        // 存
+{
+    "set" : function( name, value, options){
         var str = name + '=' + escape(value) + ';';
         if( options ){
             options.path && ( str += 'path='+options.path + ';' )
@@ -27,7 +15,19 @@ function cookie( name, value ,options ){
                 str += 'expires=' + exp.toGMTString() + ';';
             }
         }
-
         document.cookie = str;
+        return str;
+    },
+    "get" : function(name){
+        var arr = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)(;|$)'));
+        if (arr != null) return unescape(arr[2]);
+        return null;
+    },
+    "remove" : function(name){
+        var arr = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)(;|$)'));
+        exp = new Date();
+        exp.setTime(exp.getTime() - 1); 
+        document.cookie = name + '=' + arr[2] +';expires=' +  exp.toGMTString(); 
+        return null;
     }
 }
