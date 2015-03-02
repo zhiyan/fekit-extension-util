@@ -32,10 +32,10 @@
 ## 在项目中使用
 
     <!-- fekit compile: modular -->
-    var util = require("fekit-util");
+    var util = require("fekitUtil");
     util.parseURL("xxx")
 
     <!-- fekit compile: false -->
-    requre("fekit-util");
+    requre("fekitUtil");
     window.fekitUtil.parseURL("xxx")
 
