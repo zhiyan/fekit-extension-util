@@ -26,4 +26,4 @@ function pad(string, size, options) {
   } else {
     return string + pad;
   }
-};
+}
